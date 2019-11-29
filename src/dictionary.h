@@ -17,11 +17,18 @@ class hash_function
 {
 public:
 
+    //FNV
     unsigned int operator()( const string& s )  const {
-        
-        
-        // Complete definition
-        
+
+        unsigned int hashValue = 2166136261u;
+
+        for (int i = 0; i < s.length(); ++i)
+        {
+            hashValue ^= s[i];
+            hashValue *= 16777619u; // простое число
+        }
+
+        return hashValue;
     }
 };
 

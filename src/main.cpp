@@ -15,18 +15,21 @@ using namespace std;
 void lower(string& s);
 string stripPunct(const string& s);
 void checkSpelling(ifstream& in, Dictionary& dict);
-
+void insertCheck(Dictionary& dict, set<string>& correct, const string& word);
+void transposeCheck(Dictionary& dict, set<string>& correct, const string& word);
+void replaceCheck(Dictionary& dict, set<string>& correct, const string& word);
+void removeCheck(Dictionary& dict, set<string>& correct, const string& word);
 
 
 // program arguments to run, example: main.exe ../../res/wordlist.txt ../../res/test.txt
 int main(int argc, char* argv[]) {
 	
 	// Output usage message if improper command line args were given.
-	if (argc != 3)
+    if (argc != 3)
     {
-		cerr << "Usage: " << argv[0] << " wordlist_filename input_file\n";
-		return EXIT_FAILURE;
-	}
+        cerr << "Usage: " << argv[0] << " wordlist_filename input_file\n";
+        return EXIT_FAILURE;
+    }
 
 	ifstream inf(argv[2]);
 	if (! inf) 
@@ -62,9 +65,30 @@ void checkSpelling(ifstream& in, Dictionary& dict) {
 		ss << line;
 		
 		string word;
+        set<string> correct;
+
 		while (ss >> word) 
         {
-            // TODO: Complete the spell check of each word
+            word = stripPunct(word);
+            lower(word);
+
+            if (!dict.search(word))
+            {
+                transposeCheck(dict, correct, word);
+                removeCheck(dict, correct, word);
+                replaceCheck(dict, correct, word);
+                insertCheck(dict, correct, word);
+
+                cout << "line " << line_number << ": '" << word << "'\n";
+                cout << "\tsuggestions:\n";
+
+                for (const string& cor : correct)
+                {
+                    cout << "\t\t" << cor << "\n";
+                }
+
+                correct.clear();
+            }
 		}
 	}
 }
@@ -90,4 +114,72 @@ string stripPunct(const string& s) {
     {
 		return s;
 	}
+}
+
+void transposeCheck(Dictionary& dict, set<string>& correct, const string& word)
+{
+    for (int i = 0; i < word.length() - 1; ++i)
+    {
+        string t(word);
+        swap(t[i], t[i + 1]);
+
+        if (dict.search(t))
+        {
+            correct.insert(t);
+        }
+
+    }
+}
+
+void removeCheck(Dictionary& dict, set<string>& correct, const string& word)
+{
+    for (int i = 0; i < word.length(); ++i)
+    {
+        string t(word);
+        t.erase(i, 1);
+
+        if (dict.search(t))
+        {
+            correct.insert(t);
+        }
+    }
+}
+
+void replaceCheck(Dictionary& dict, set<string>& correct, const string& word)
+{
+    for (int i = 0; i < word.length(); ++i)
+    {
+        for (char c = 'a'; c <= 'z'; ++c)
+        {
+            string t(word);
+            t[i] = c;
+
+            if (dict.search(t))
+            {
+                correct.insert(t);
+            }
+        }
+    }
+}
+
+void insertCheck(Dictionary& dict, set<string>& correct, const string& word)
+{
+    string t(word);
+    string::const_iterator iter = t.begin();
+
+    while (iter <= t.end())
+    {
+        for (char c = 'a'; c <= 'z'; ++c)
+        {
+            iter = t.insert(iter, c);
+            if (dict.search(t))
+            {
+                correct.insert(t);
+            }
+
+            iter = t.erase(iter);
+        }
+
+        ++iter;
+    }
 }
